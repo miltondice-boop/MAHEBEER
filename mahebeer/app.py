@@ -65,7 +65,8 @@ if HAS_QT:
             self.refresh()
         def load_ingredients(self):
             self.ing.clear()
-            for r in self.service.ingredients(self.ing_search.text()): self.ing.addItem(f"{r['name']} ({r['measure_type']}) - {money(r['unit_cost'])}", r)
+            for r in self.service.ingredients(self.ing_search.text()):
+                self.ing.addItem(f"{r['name']} ({r['measure_type']}) - {money(r['unit_cost'])}", dict(r))
         def add_item(self):
             r=self.ing.currentData()
             if r: self.items.append({"ingredient_id":r["id"],"name":r["name"],"quantity":self.qty.value(),"unit":r["measure_type"],"unit_cost":r["unit_cost"]}); self.refresh()
@@ -114,7 +115,14 @@ if HAS_QT:
             if rows: self.recipe_dialog(rows[0])
         def recipe_dialog(self, recipe):
             d=RecipeDialog(self.service,self,recipe)
-            if d.exec(): self.service.save_recipe(recipe["id"] if recipe else None,d.name.text(),d.desc.toPlainText(),d.portions.value(),d.margin.value(),d.manual.value(),d.items); self.refresh_all()
+            if d.exec():
+                if not d.name.text().strip():
+                    QMessageBox.warning(self, "Validación", "Escriba el nombre de la receta")
+                    return
+                if not d.items:
+                    QMessageBox.warning(self, "Validación", "Busque y agregue al menos un ingrediente")
+                    return
+                self.service.save_recipe(recipe["id"] if recipe else None,d.name.text(),d.desc.toPlainText(),d.portions.value(),d.margin.value(),d.manual.value(),d.items); self.refresh_all()
         def del_rec(self):
             rid=self.selected_id(self.rec_tab.table)
             if rid: self.service.soft_delete_recipe(rid); self.refresh_all()

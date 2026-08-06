@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
+import unicodedata
 
 try:
     from openpyxl import Workbook, load_workbook
@@ -17,6 +18,25 @@ except ImportError:  # Dependencia opcional para entornos sin paquetes instalado
 
 from .config import EXPORT_DIR
 from .database import Database
+
+INGREDIENT_SEARCH_ALIASES = {
+    "pollo": ("pechuga", "muslo", "alita", "ala", "pierna", "contramuslo"),
+    "res": ("carne", "lomo", "posta", "falda", "costilla"),
+    "cerdo": ("tocino", "chuleta", "lomo", "costilla", "panceta"),
+    "pescado": ("filete", "tilapia", "salmon", "atun", "trucha"),
+}
+
+def normalize_search(text: str) -> str:
+    normalized = unicodedata.normalize("NFKD", text or "")
+    return "".join(ch for ch in normalized if not unicodedata.combining(ch)).casefold().strip()
+
+def ingredient_matches(name: str, search: str) -> bool:
+    query = normalize_search(search)
+    if not query:
+        return True
+    normalized_name = normalize_search(name)
+    terms = [query, *INGREDIENT_SEARCH_ALIASES.get(query, ())]
+    return any(term in normalized_name for term in terms)
 
 @dataclass(frozen=True)
 class PriceMetrics:
@@ -73,9 +93,10 @@ class MahebeerService:
             self._history(c, entity, eid, "Restaurar", "Restaurado desde papelera")
 
     def ingredients(self, search: str = "", include_deleted: bool = False):
-        where = "WHERE name LIKE ?" + ("" if include_deleted else " AND deleted_at IS NULL")
+        where = "WHERE 1=1" + ("" if include_deleted else " AND deleted_at IS NULL")
         with self.db.connect() as c:
-            return c.execute(f"SELECT * FROM ingredients {where} ORDER BY name", (f"%{search}%",)).fetchall()
+            rows = c.execute(f"SELECT * FROM ingredients {where} ORDER BY name").fetchall()
+        return [row for row in rows if ingredient_matches(row["name"], search)]
 
     def save_recipe(self, rid: int | None, name: str, description: str, portions: float, margin: float, manual_price: float, items: Iterable[dict]) -> int:
         with self.db.connect() as c:
