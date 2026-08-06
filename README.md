@@ -19,3 +19,7 @@ python -m mahebeer.app
 - Reportes de ingredientes costosos, costo promedio, inventario e historial.
 - Papelera lógica, duplicado/copiado de recetas, importación Excel y exportación Excel/PDF.
 - Base local SQLite en `Documentos/MAHEBEER` con backups rotativos.
+
+## Ejecutar fácilmente en Windows
+
+Copia la carpeta completa en `C:\MAHEBEER` y haz doble clic en `ejecutar_mahebeer.bat`. También puedes seguir la guía `INSTALAR_EN_WINDOWS.md`.
