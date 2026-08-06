@@ -158,32 +158,181 @@ def _main_qt() -> None:
 def _main_tk() -> None:
     import tkinter as tk
     from tkinter import ttk, messagebox
-    db=Database(); service=MahebeerService(db)
-    root=tk.Tk(); root.title(APP_NAME); root.geometry("1100x700"); root.configure(bg="#111827")
-    style=ttk.Style(root); style.theme_use("clam"); style.configure("TFrame",background="#111827"); style.configure("TLabel",background="#111827",foreground="#f9fafb"); style.configure("TButton",font=("Segoe UI",10,"bold")); style.configure("Treeview",background="#0b1220",foreground="#f9fafb",fieldbackground="#0b1220")
-    book=ttk.Notebook(root); book.pack(fill="both",expand=True,padx=12,pady=12)
+
+    db = Database()
+    service = MahebeerService(db)
+    root = tk.Tk()
+    root.title(APP_NAME)
+    root.geometry("1180x760")
+    root.configure(bg="#111827")
+    style = ttk.Style(root)
+    style.theme_use("clam")
+    style.configure("TFrame", background="#111827")
+    style.configure("TLabel", background="#111827", foreground="#f9fafb")
+    style.configure("TButton", font=("Segoe UI", 10, "bold"), padding=8)
+    style.configure("Treeview", background="#0b1220", foreground="#f9fafb", fieldbackground="#0b1220")
+
+    book = ttk.Notebook(root)
+    book.pack(fill="both", expand=True, padx=12, pady=12)
+    ing_frame = ttk.Frame(book)
+    rec_frame = ttk.Frame(book)
+    rep_frame = ttk.Frame(book)
+    book.add(ing_frame, text="Ingredientes")
+    book.add(rec_frame, text="Recetas y costos")
+    book.add(rep_frame, text="Reportes")
+
     def tree(parent, cols):
-        tv=ttk.Treeview(parent,columns=cols,show="headings")
-        for c in cols: tv.heading(c,text=c); tv.column(c,width=140)
-        tv.pack(fill="both",expand=True,pady=8); return tv
-    ing_frame=ttk.Frame(book); rec_frame=ttk.Frame(book); rep_frame=ttk.Frame(book); book.add(ing_frame,text="Ingredientes"); book.add(rec_frame,text="Recetas y costos"); book.add(rep_frame,text="Reportes")
-    search_i=tk.StringVar(); ttk.Entry(ing_frame,textvariable=search_i).pack(fill="x",padx=8,pady=8); ing_tree=tree(ing_frame,("ID","Nombre","Compra","Cantidad","Medida","Costo unitario"))
-    search_r=tk.StringVar(); ttk.Entry(rec_frame,textvariable=search_r).pack(fill="x",padx=8,pady=8); rec_tree=tree(rec_frame,("ID","Nombre","Rendimiento","Costo total","Precio sugerido","Margen bruto"))
-    report=tk.Text(rep_frame,bg="#0b1220",fg="#f9fafb",insertbackground="#f9fafb"); report.pack(fill="both",expand=True,padx=8,pady=8)
+        tv = ttk.Treeview(parent, columns=cols, show="headings", height=15)
+        for c in cols:
+            tv.heading(c, text=c)
+            tv.column(c, width=140)
+        tv.pack(fill="both", expand=True, pady=8)
+        return tv
+
+    search_i = tk.StringVar()
+    ttk.Entry(ing_frame, textvariable=search_i).pack(fill="x", padx=8, pady=8)
+    ing_tree = tree(ing_frame, ("ID", "Nombre", "Compra", "Cantidad", "Medida", "Costo unitario"))
+    search_r = tk.StringVar()
+    ttk.Entry(rec_frame, textvariable=search_r).pack(fill="x", padx=8, pady=8)
+    rec_tree = tree(rec_frame, ("ID", "Nombre", "Rendimiento", "Costo total", "Precio sugerido", "Margen bruto"))
+    report = tk.Text(rep_frame, bg="#0b1220", fg="#f9fafb", insertbackground="#f9fafb")
+    report.pack(fill="both", expand=True, padx=8, pady=8)
+
     def refresh(*_):
-        ing_tree.delete(*ing_tree.get_children()); rec_tree.delete(*rec_tree.get_children()); report.delete("1.0","end")
-        for r in service.ingredients(search_i.get()): ing_tree.insert("", "end", values=(r["id"],r["name"],money(r["purchase_cost"]),r["purchased_quantity"],r["measure_type"],money(r["unit_cost"])))
+        ing_tree.delete(*ing_tree.get_children())
+        rec_tree.delete(*rec_tree.get_children())
+        report.delete("1.0", "end")
+        for r in service.ingredients(search_i.get()):
+            ing_tree.insert("", "end", values=(r["id"], r["name"], money(r["purchase_cost"]), r["purchased_quantity"], r["measure_type"], money(r["unit_cost"])))
         for r in service.recipes(search_r.get()):
-            m=price_metrics(r["total_cost"],r["yield_portions"],r["suggested_margin"],r["manual_sale_price"]); rec_tree.insert("","end",values=(r["id"],r["name"],r["yield_portions"],money(m.total_cost),money(m.suggested_price),f"{m.gross_margin:.1f}%"))
-        d=service.dashboard_reports(); report.insert("end",f"Valor total inventario: {money(d['inventory'])}\nCosto promedio: {money(d['avg_cost'])}\n\nIngredientes más costosos:\n")
-        for r in d["expensive"]: report.insert("end",f"- {r['name']}: {money(r['unit_cost'])}\n")
-    def seed():
-        try:
-            service.add_ingredient("Pechuga",32000,2000,"Gramos"); service.add_ingredient("Huevos",18000,30,"Unidades")
-        except Exception:
-            pass
-        refresh(); messagebox.showinfo("MAHEBEER","Datos de demostración cargados. Use PySide6 para la experiencia completa moderna.")
-    ttk.Button(ing_frame,text="Cargar ejemplo rápido",command=seed).pack(pady=4); search_i.trace_add("write",refresh); search_r.trace_add("write",refresh); refresh(); root.mainloop()
+            m = price_metrics(r["total_cost"], r["yield_portions"], r["suggested_margin"], r["manual_sale_price"])
+            rec_tree.insert("", "end", values=(r["id"], r["name"], r["yield_portions"], money(m.total_cost), money(m.suggested_price), f"{m.gross_margin:.1f}%"))
+        d = service.dashboard_reports()
+        report.insert("end", f"Valor total inventario: {money(d['inventory'])}\nCosto promedio: {money(d['avg_cost'])}\n\nIngredientes más costosos:\n")
+        for r in d["expensive"]:
+            report.insert("end", f"- {r['name']}: {money(r['unit_cost'])}\n")
+
+    def add_ingredient_dialog():
+        win = tk.Toplevel(root)
+        win.title("Nuevo ingrediente")
+        win.configure(bg="#111827")
+        name = tk.StringVar()
+        cost = tk.DoubleVar(value=0)
+        qty = tk.DoubleVar(value=1)
+        measure = tk.StringVar(value=MEASURES[0])
+        fields = ttk.Frame(win)
+        fields.pack(padx=16, pady=16, fill="x")
+        for label, widget in (
+            ("Nombre", ttk.Entry(fields, textvariable=name)),
+            ("Costo de compra", ttk.Entry(fields, textvariable=cost)),
+            ("Cantidad comprada", ttk.Entry(fields, textvariable=qty)),
+            ("Medida", ttk.Combobox(fields, textvariable=measure, values=MEASURES, state="readonly")),
+        ):
+            ttk.Label(fields, text=label).pack(anchor="w")
+            widget.pack(fill="x", pady=(0, 8))
+        def save():
+            if not name.get().strip():
+                messagebox.showerror("Validación", "Escriba el nombre del ingrediente")
+                return
+            service.add_ingredient(name.get(), float(cost.get()), float(qty.get()), measure.get())
+            win.destroy()
+            refresh()
+        ttk.Button(fields, text="Guardar ingrediente", command=save).pack(fill="x", pady=8)
+
+    def add_recipe_dialog():
+        win = tk.Toplevel(root)
+        win.title("Nueva receta")
+        win.geometry("900x650")
+        win.configure(bg="#111827")
+        selected_items = []
+        name = tk.StringVar()
+        portions = tk.DoubleVar(value=1)
+        margin = tk.DoubleVar(value=30)
+        manual = tk.DoubleVar(value=0)
+        ingredient_search = tk.StringVar()
+        ingredient_qty = tk.DoubleVar(value=1)
+        top = ttk.Frame(win)
+        top.pack(fill="x", padx=12, pady=12)
+        for label, var in (("Nombre del producto", name), ("Rendimiento / porciones", portions), ("Margen %", margin), ("Precio manual (0=sugerido)", manual)):
+            ttk.Label(top, text=label).pack(anchor="w")
+            ttk.Entry(top, textvariable=var).pack(fill="x", pady=(0, 6))
+        ttk.Label(top, text="Descripción").pack(anchor="w")
+        desc = tk.Text(top, height=3, bg="#0b1220", fg="#f9fafb", insertbackground="#f9fafb")
+        desc.pack(fill="x", pady=(0, 8))
+
+        chooser = ttk.Frame(win)
+        chooser.pack(fill="x", padx=12)
+        ttk.Label(chooser, text="Buscar ingrediente para agregar a la receta").grid(row=0, column=0, sticky="w")
+        ttk.Entry(chooser, textvariable=ingredient_search).grid(row=1, column=0, sticky="ew", padx=(0, 8))
+        ttk.Label(chooser, text="Cantidad usada").grid(row=0, column=1, sticky="w")
+        ttk.Entry(chooser, textvariable=ingredient_qty, width=14).grid(row=1, column=1, padx=(0, 8))
+        chooser.columnconfigure(0, weight=1)
+        match_tree = ttk.Treeview(win, columns=("ID", "Nombre", "Medida", "Costo unitario"), show="headings", height=6)
+        for col in ("ID", "Nombre", "Medida", "Costo unitario"):
+            match_tree.heading(col, text=col)
+            match_tree.column(col, width=140)
+        match_tree.pack(fill="x", padx=12, pady=8)
+        items_tree = ttk.Treeview(win, columns=("ID", "Ingrediente", "Cantidad", "Unidad", "Costo"), show="headings", height=8)
+        for col in ("ID", "Ingrediente", "Cantidad", "Unidad", "Costo"):
+            items_tree.heading(col, text=col)
+            items_tree.column(col, width=140)
+        items_tree.pack(fill="both", expand=True, padx=12, pady=8)
+        summary = ttk.Label(win, text="Costo total: $0")
+        summary.pack(fill="x", padx=12, pady=4)
+
+        def load_matches(*_):
+            match_tree.delete(*match_tree.get_children())
+            for r in service.ingredients(ingredient_search.get()):
+                match_tree.insert("", "end", values=(r["id"], r["name"], r["measure_type"], money(r["unit_cost"])))
+        def update_items():
+            items_tree.delete(*items_tree.get_children())
+            total = 0.0
+            for item in selected_items:
+                cost = item["quantity"] * item["unit_cost"]
+                total += cost
+                items_tree.insert("", "end", values=(item["ingredient_id"], item["name"], item["quantity"], item["unit"], money(cost)))
+            m = price_metrics(total, float(portions.get() or 1), float(margin.get() or 0), float(manual.get() or 0))
+            summary.config(text=f"Costo total: {money(m.total_cost)} | Porción: {money(m.cost_per_portion)} | Precio sugerido: {money(m.suggested_price)} | Ganancia: {money(m.profit_value)} | Margen bruto: {m.gross_margin:.1f}%")
+        def add_selected_ingredient():
+            selection = match_tree.selection()
+            if not selection:
+                messagebox.showerror("Validación", "Busque y seleccione un ingrediente")
+                return
+            iid = int(match_tree.item(selection[0], "values")[0])
+            rows = [r for r in service.ingredients(include_deleted=False) if r["id"] == iid]
+            if not rows:
+                return
+            r = rows[0]
+            selected_items.append({"ingredient_id": r["id"], "name": r["name"], "quantity": float(ingredient_qty.get()), "unit": r["measure_type"], "unit_cost": r["unit_cost"]})
+            update_items()
+        def save_recipe():
+            if not name.get().strip():
+                messagebox.showerror("Validación", "Escriba el nombre de la receta")
+                return
+            if not selected_items:
+                messagebox.showerror("Validación", "Agregue al menos un ingrediente")
+                return
+            service.save_recipe(None, name.get(), desc.get("1.0", "end").strip(), float(portions.get()), float(margin.get()), float(manual.get()), selected_items)
+            win.destroy()
+            refresh()
+        ttk.Button(chooser, text="Agregar ingrediente", command=add_selected_ingredient).grid(row=1, column=2)
+        ttk.Button(win, text="Guardar receta", command=save_recipe).pack(fill="x", padx=12, pady=8)
+        ingredient_search.trace_add("write", load_matches)
+        portions.trace_add("write", lambda *_: update_items())
+        margin.trace_add("write", lambda *_: update_items())
+        manual.trace_add("write", lambda *_: update_items())
+        load_matches()
+
+    buttons_i = ttk.Frame(ing_frame)
+    buttons_i.pack(fill="x", padx=8)
+    ttk.Button(buttons_i, text="Nuevo ingrediente", command=add_ingredient_dialog).pack(side="left", padx=4)
+    buttons_r = ttk.Frame(rec_frame)
+    buttons_r.pack(fill="x", padx=8)
+    ttk.Button(buttons_r, text="Nueva receta con buscador de ingredientes", command=add_recipe_dialog).pack(side="left", padx=4)
+    search_i.trace_add("write", refresh)
+    search_r.trace_add("write", refresh)
+    refresh()
+    root.mainloop()
 
 def _headless_check() -> None:
     db = Database()
