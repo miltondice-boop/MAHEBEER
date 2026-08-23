@@ -1,0 +1,13 @@
+(function(){
+'use strict';
+let busy=false;
+const money=v=>new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0}).format(Number(v||0));
+const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function isEmployee(){return typeof profile!=='undefined'&&profile&&profile.rol!=='administrador'}
+function isAdmin(){return typeof profile!=='undefined'&&profile&&profile.rol==='administrador'}
+async function getSummary(id){const r=await db.rpc('resumen_pago_semanal',{p_empleado_id:id});if(r.error)throw r.error;return r.data&&r.data[0]?r.data[0]:{periodo_inicio:'',periodo_fin:'',horas:0,total:0}}
+async function updateEmployee(){if(!isEmployee())return;const box=document.getElementById('employeeSummary');if(!box)return;try{const id=profile.empleado_id;const s=await getSummary(id);box.innerHTML='<div class="employee-period">Periodo actual: '+esc(s.periodo_inicio||'')+' → '+esc(s.periodo_fin||'')+'</div><div class="employee-summary"><div class="employee-summary-card"><span>🕐 Horas acumuladas</span><b>'+Number(s.horas||0).toFixed(2)+' h</b></div><div class="employee-summary-card"><span>💵 Pago acumulado</span><b>'+money(s.total)+'</b></div></div>'}catch(e){}}
+async function updateAdmin(){if(!isAdmin())return;const grid=document.getElementById('weeklyGrid');if(!grid)return;const list=Array.from(new Map((Array.isArray(employees)?employees:[]).filter(e=>e&&e.activo!==false).map(e=>[String(e.id),e])).values());const cards=Array.from(grid.querySelectorAll('.weekly-card'));let totalHours=0,totalPay=0,open=0;for(let i=0;i<list.length;i++){try{const s=await getSummary(list[i].id);const h=Number(s.horas||0),t=Number(s.total||0);totalHours+=h;totalPay+=t;const card=cards[i];if(card){const wh=card.querySelectorAll('.wh');if(wh[0])wh[0].textContent=h.toFixed(2)+' horas';if(wh[1])wh[1].textContent=money(t);const btn=card.querySelector('button');if(btn)btn.disabled=h<=0}}catch(e){}}const sh=document.getElementById('stHours'),sp=document.getElementById('stPay');if(sh)sh.textContent=totalHours.toFixed(2);if(sp)sp.textContent=money(totalPay);const so=document.getElementById('stOpen');if(so){const ids=new Set((Array.isArray(journeys)?journeys:[]).filter(j=>!j.salida&&j.empleado_id).map(j=>String(j.empleado_id)));so.textContent=String(ids.size)}}
+async function live(){if(busy||typeof profile==='undefined'||!profile)return;busy=true;try{if(isEmployee())await updateEmployee();if(isAdmin())await updateAdmin()}finally{busy=false}}
+const wait=setInterval(()=>{if(typeof profile!=='undefined'&&profile){clearInterval(wait);live();setInterval(live,2000)}},250);
+})();
