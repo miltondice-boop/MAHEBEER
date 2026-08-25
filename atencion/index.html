@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>MAHEBEER — Atención</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#111;color:#fff;font-family:Arial,Helvetica,sans-serif;padding:18px;min-height:100vh}.card{max-width:520px;margin:0 auto;background:#1d1d1d;border:1px solid #333;border-radius:20px;padding:22px;box-shadow:0 12px 35px #0009}h1{text-align:center;margin:4px 0 6px;font-size:30px}.mesa{text-align:center;color:#c8c8c8;margin-bottom:22px;font-weight:bold}.sub{text-align:center;color:#999;font-size:13px;margin-top:-14px;margin-bottom:18px}button{width:100%;border:0;border-radius:13px;padding:16px 12px;margin:7px 0;font-size:17px;font-weight:700;cursor:pointer;background:#f1f1f1;color:#111}button.secondary{background:#303030;color:#fff}form{display:none}label{display:block;margin:10px 0 5px;color:#bbb;font-size:14px}input,textarea{width:100%;padding:13px;border:1px solid #4a4a4a;border-radius:11px;background:#101010;color:#fff;font-size:16px}textarea{resize:vertical;min-height:110px}.status{text-align:center;margin-top:14px;min-height:24px;color:#ddd}.ok{color:#76e08b}.err{color:#ff7d7d}.hidden{display:none!important}
+</style>
+</head>
+<body>
+<div class="card">
+<h1>🎸 MAHEBEER</h1>
+<div class="mesa" id="mesa">Identificando mesa...</div>
+<div class="sub">Atención directa desde tu mesa</div>
+<div id="menu">
+<button onclick="openForm('musica')">🎵 PEDIR CANCIÓN</button>
+<button onclick="openForm('cocina')">🍔 PEDIR COMIDA</button>
+<button onclick="openForm('barra')">🍺 PEDIR BEBIDA</button>
+<button onclick="openForm('atencion')">🙋 LLAMAR MESERO</button>
+<button onclick="sendSimple('cuenta','Quiero pedir la cuenta')">🧾 PEDIR LA CUENTA</button>
+</div>
+<form id="form" onsubmit="return false">
+<label>Nombre (opcional)</label><input id="customer" autocomplete="name">
+<div id="musicFields" class="hidden"><label>Canción</label><input id="song"><label>Artista (opcional)</label><input id="artist"></div>
+<label>Solicitud</label><textarea id="detail" placeholder="Escribe lo que necesitas"></textarea>
+<button onclick="sendForm()">ENVIAR SOLICITUD</button>
+<button class="secondary" onclick="back()">VOLVER</button>
+</form>
+<div id="status" class="status"></div>
+</div>
+<script>
+const qs=new URLSearchParams(location.search);
+const token=qs.get('mesa')||'';
+const tableName=qs.get('nombre')||'Mesa';
+const API='https://gkuwjfmgdmlyqgmvdmzf.supabase.co/functions/v1/mahebeer-service-requests?action=create';
+let type='';
+document.getElementById('mesa').textContent=token?'📍 '+decodeURIComponent(tableName):'⚠️ QR de mesa no válido';
+function setStatus(text,cls=''){const e=document.getElementById('status');e.className='status '+cls;e.textContent=text}
+function openForm(t){if(!token){setStatus('Este QR no identifica una mesa.','err');return}type=t;document.getElementById('menu').style.display='none';document.getElementById('form').style.display='block';document.getElementById('musicFields').classList.toggle('hidden',t!=='musica');document.getElementById('detail').placeholder=t==='musica'?'Mensaje adicional (opcional)':'¿Qué necesitas?';setStatus('')}
+function back(){document.getElementById('form').reset();document.getElementById('form').style.display='none';document.getElementById('menu').style.display='block';setStatus('')}
+async function sendSimple(t,text){if(!token){setStatus('Este QR no identifica una mesa.','err');return}await submit({request_type:t,request_text:text})}
+async function sendForm(){await submit({request_type:type,customer_name:document.getElementById('customer').value.trim(),song_title:document.getElementById('song').value.trim(),artist:document.getElementById('artist').value.trim(),request_text:document.getElementById('detail').value.trim()})}
+async function submit(extra){if(!token){setStatus('Este QR no identifica una mesa.','err');return}setStatus('Enviando solicitud...');const payload={...extra,table_token:token,table_name:decodeURIComponent(tableName),source:'qr'};try{const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});const data=await r.json().catch(()=>({}));if(!r.ok||!data.ok)throw new Error(data.error||'No fue posible enviar la solicitud');setStatus('✅ Solicitud enviada. Ya la estamos atendiendo.','ok');document.getElementById('form').reset();if(document.getElementById('form').style.display==='block')setTimeout(back,1200)}catch(e){setStatus('❌ '+e.message,'err')}}
+</script>
+</body>
+</html>
