@@ -2,46 +2,38 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>MAHEBEER — Atención</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MAHEBEER — Pedidos</title>
 <style>
-*{box-sizing:border-box}body{margin:0;background:#111;color:#fff;font-family:Arial,Helvetica,sans-serif;padding:18px;min-height:100vh}.card{max-width:520px;margin:0 auto;background:#1d1d1d;border:1px solid #333;border-radius:20px;padding:22px;box-shadow:0 12px 35px #0009}h1{text-align:center;margin:4px 0 6px;font-size:30px}.mesa{text-align:center;color:#c8c8c8;margin-bottom:22px;font-weight:bold}.sub{text-align:center;color:#999;font-size:13px;margin-top:-14px;margin-bottom:18px}button{width:100%;border:0;border-radius:13px;padding:16px 12px;margin:7px 0;font-size:17px;font-weight:700;cursor:pointer;background:#f1f1f1;color:#111}button.secondary{background:#303030;color:#fff}form{display:none}label{display:block;margin:10px 0 5px;color:#bbb;font-size:14px}input,textarea{width:100%;padding:13px;border:1px solid #4a4a4a;border-radius:11px;background:#101010;color:#fff;font-size:16px}textarea{resize:vertical;min-height:110px}.status{text-align:center;margin-top:14px;min-height:24px;color:#ddd}.ok{color:#76e08b}.err{color:#ff7d7d}.hidden{display:none!important}
+*{box-sizing:border-box}body{font-family:Arial,sans-serif;background:#111;color:#fff;margin:0;padding:14px}.card{max-width:620px;margin:auto;background:#1c1c1c;border-radius:18px;padding:18px}h1{text-align:center;margin:4px 0 6px}.mesa{text-align:center;color:#bbb;margin-bottom:14px}button{border:0;border-radius:11px;font-weight:bold;font-size:15px;cursor:pointer}.menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.menu-grid button{padding:14px;background:#292929;color:#fff}.back{background:#333;color:#fff;width:100%;padding:13px;margin-top:10px}.send{background:#eee;color:#111;width:100%;padding:15px;margin-top:12px}input,textarea,select{width:100%;box-sizing:border-box;padding:12px;margin:5px 0 10px;border-radius:9px;background:#111;color:#fff;border:1px solid #555}.form{display:none}.section-title{font-weight:bold;margin:8px 0}.categories{display:flex;gap:7px;overflow:auto;margin:8px 0}.categories button{padding:9px 12px;background:#333;color:#fff;white-space:nowrap}.product{display:flex;align-items:center;gap:8px;background:#252525;border-radius:10px;padding:9px;margin:6px 0}.product-info{flex:1}.product-name{font-weight:bold}.price{color:#ddd;font-size:14px;margin-top:3px}.qty{display:flex;align-items:center;gap:6px}.qty button{width:34px;height:34px;background:#444;color:#fff}.qty span{min-width:22px;text-align:center;font-weight:bold}.summary{background:#111;border:1px solid #444;border-radius:12px;padding:10px;margin-top:10px}.summary-row{display:flex;justify-content:space-between;padding:5px 0}.total{font-size:18px;font-weight:bold;border-top:1px solid #444;margin-top:6px;padding-top:9px}.empty{text-align:center;color:#999;padding:20px}.note{color:#aaa;font-size:13px;margin:5px 0 10px}.search{margin-bottom:8px}@media(max-width:480px){.menu-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <div class="card">
-<h1>🎸 MAHEBEER</h1>
-<div class="mesa" id="mesa">Identificando mesa...</div>
-<div class="sub">Atención directa desde tu mesa</div>
-<div id="menu">
-<button onclick="openForm('musica')">🎵 PEDIR CANCIÓN</button>
-<button onclick="openForm('cocina')">🍔 PEDIR COMIDA</button>
-<button onclick="openForm('barra')">🍺 PEDIR BEBIDA</button>
-<button onclick="openForm('atencion')">🙋 LLAMAR MESERO</button>
-<button onclick="sendSimple('cuenta','Quiero pedir la cuenta')">🧾 PEDIR LA CUENTA</button>
-</div>
-<form id="form" onsubmit="return false">
-<label>Nombre (opcional)</label><input id="customer" autocomplete="name">
-<div id="musicFields" class="hidden"><label>Canción</label><input id="song"><label>Artista (opcional)</label><input id="artist"></div>
-<label>Solicitud</label><textarea id="detail" placeholder="Escribe lo que necesitas"></textarea>
-<button onclick="sendForm()">ENVIAR SOLICITUD</button>
-<button class="secondary" onclick="back()">VOLVER</button>
-</form>
-<div id="status" class="status"></div>
-</div>
+<h1>🎸 MAHEBEER</h1><div id="mesa" class="mesa">Mesa</div>
+<div id="menu"><div class="menu-grid">
+<button onclick="openForm('musica')">🎵 PEDIR CANCIÓN</button><button onclick="openForm('cocina')">🍔 PEDIR COMIDA</button><button onclick="openForm('barra')">🍺 PEDIR BEBIDA</button><button onclick="openForm('atencion')">🙋 LLAMAR MESERO</button><button onclick="sendSimple('cuenta','Quiero pedir la cuenta')">🧾 PEDIR CUENTA</button>
+</div></div>
+<div id="form" class="form"><input id="customer" placeholder="Tu nombre (opcional)">
+<div id="musicFields" style="display:none"><input id="song" placeholder="Canción"><input id="artist" placeholder="Artista"></div>
+<div id="foodFields" style="display:none"><div class="section-title">🍔 ELIGE TUS PLATOS</div><input id="search" class="search" placeholder="🔎 Buscar plato..." oninput="renderProducts()"><div id="categories" class="categories"></div><div id="products"></div><div id="orderSummary" class="summary"><div class="empty">Selecciona los productos que deseas.</div></div><div class="note">Los precios corresponden al menú de MAHEBEER.</div><textarea id="foodNote" rows="3" placeholder="Observaciones del pedido (opcional)"></textarea></div>
+<div id="detailFields"><textarea id="detail" rows="5" placeholder="Escribe tu solicitud"></textarea></div>
+<button class="send" onclick="submitForm()">ENVIAR SOLICITUD</button><button class="back" onclick="back()">VOLVER</button></div><div id="msg"></div></div>
 <script>
-const qs=new URLSearchParams(location.search);
-const token=qs.get('mesa')||'';
-const tableName=qs.get('nombre')||'Mesa';
-const API='https://gkuwjfmgdmlyqgmvdmzf.supabase.co/functions/v1/mahebeer-service-requests?action=create';
-let type='';
-document.getElementById('mesa').textContent=token?'📍 '+decodeURIComponent(tableName):'⚠️ QR de mesa no válido';
-function setStatus(text,cls=''){const e=document.getElementById('status');e.className='status '+cls;e.textContent=text}
-function openForm(t){if(!token){setStatus('Este QR no identifica una mesa.','err');return}type=t;document.getElementById('menu').style.display='none';document.getElementById('form').style.display='block';document.getElementById('musicFields').classList.toggle('hidden',t!=='musica');document.getElementById('detail').placeholder=t==='musica'?'Mensaje adicional (opcional)':'¿Qué necesitas?';setStatus('')}
-function back(){document.getElementById('form').reset();document.getElementById('form').style.display='none';document.getElementById('menu').style.display='block';setStatus('')}
-async function sendSimple(t,text){if(!token){setStatus('Este QR no identifica una mesa.','err');return}await submit({request_type:t,request_text:text})}
-async function sendForm(){await submit({request_type:type,customer_name:document.getElementById('customer').value.trim(),song_title:document.getElementById('song').value.trim(),artist:document.getElementById('artist').value.trim(),request_text:document.getElementById('detail').value.trim()})}
-async function submit(extra){if(!token){setStatus('Este QR no identifica una mesa.','err');return}setStatus('Enviando solicitud...');const payload={...extra,table_token:token,table_name:decodeURIComponent(tableName),source:'qr'};try{const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});const data=await r.json().catch(()=>({}));if(!r.ok||!data.ok)throw new Error(data.error||'No fue posible enviar la solicitud');setStatus('✅ Solicitud enviada. Ya la estamos atendiendo.','ok');document.getElementById('form').reset();if(document.getElementById('form').style.display==='block')setTimeout(back,1200)}catch(e){setStatus('❌ '+e.message,'err')}}
+const params=new URLSearchParams(location.search);const token=params.get('mesa')||'';const tableName=params.get('nombre')||'';const API='https://gkuwjfmgdmlyqgmvdmzf.supabase.co/functions/v1/mahebeer-service-requests';let type='';let products=[];let selected={};let activeCategory='TODAS';
+document.getElementById('mesa').textContent=token?(tableName?'MESA '+tableName.toUpperCase()+' ✓':'MESA IDENTIFICADA ✓'):'NO SE IDENTIFICÓ LA MESA';
+async function loadMenu(){try{const r=await fetch('menu.json',{cache:'no-store'});const d=await r.json();products=Array.isArray(d.products)?d.products:[];renderCategories();renderProducts()}catch(e){document.getElementById('products').innerHTML='<div class="empty">No se pudo cargar el menú. Intenta nuevamente.</div>'}}
+function money(v){return '$'+Number(v||0).toLocaleString('es-CO')}
+function openForm(t){type=t;document.getElementById('menu').style.display='none';document.getElementById('form').style.display='block';document.getElementById('musicFields').style.display=t==='musica'?'block':'none';document.getElementById('foodFields').style.display=t==='cocina'?'block':'none';document.getElementById('detailFields').style.display=t==='cocina'?'none':'block';if(t==='cocina')loadMenu()}
+function back(){document.getElementById('form').style.display='none';document.getElementById('menu').style.display='block';document.getElementById('msg').textContent=''}
+function renderCategories(){const cats=['TODAS',...new Set(products.map(p=>(p.department||'OTROS').toUpperCase()))];document.getElementById('categories').innerHTML=cats.map(c=>`<button onclick="activeCategory='${escapeAttr(c)}';renderProducts()">${c}</button>`).join('')}
+function renderProducts(){const q=(document.getElementById('search')?.value||'').toLowerCase();const list=products.filter(p=>(activeCategory==='TODAS'||(p.department||'OTROS').toUpperCase()===activeCategory)&&p.name.toLowerCase().includes(q));document.getElementById('products').innerHTML=list.length?list.map(p=>{const qty=selected[p.id]||0;return `<div class="product"><div class="product-info"><div class="product-name">${escapeHtml(p.name)}</div><div class="price">${money(p.price)}</div></div><div class="qty"><button onclick="changeQty(${p.id},-1)">−</button><span>${qty}</span><button onclick="changeQty(${p.id},1)">+</button></div></div>`}).join(''):'<div class="empty">No encontramos ese producto.</div>';renderSummary()}
+function changeQty(id,delta){selected[id]=Math.max(0,(selected[id]||0)+delta);if(!selected[id])delete selected[id];renderProducts()}
+function renderSummary(){const items=products.filter(p=>selected[p.id]).map(p=>({id:p.id,name:p.name,price:Number(p.price||0),qty:selected[p.id],total:Number(p.price||0)*selected[p.id]}));const box=document.getElementById('orderSummary');if(!items.length){box.innerHTML='<div class="empty">Selecciona los productos que deseas.</div>';return}let total=items.reduce((s,i)=>s+i.total,0);box.innerHTML=items.map(i=>`<div class="summary-row"><span>${i.qty} × ${escapeHtml(i.name)}</span><span>${money(i.total)}</span></div>`).join('')+`<div class="summary-row total"><span>TOTAL</span><span>${money(total)}</span></div>`}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}function escapeAttr(s){return String(s).replace(/'/g,"\\'")}
+function buildFoodText(){const items=products.filter(p=>selected[p.id]).map(p=>{const qty=selected[p.id],total=Number(p.price||0)*qty;return `${qty} x ${p.name} | unitario ${money(p.price)} | subtotal ${money(total)}`});const total=products.filter(p=>selected[p.id]).reduce((s,p)=>s+Number(p.price||0)*selected[p.id],0);const note=document.getElementById('foodNote').value.trim();return `PEDIDO DE COCINA\n${items.join('\n')}\nTOTAL: ${money(total)}${note?`\nOBSERVACIONES: ${note}`:''}`}
+async function submitForm(){if(type==='cocina'){const count=Object.values(selected).reduce((a,b)=>a+b,0);if(!count){document.getElementById('msg').textContent='⚠️ Selecciona al menos un producto.';return}await send(type,buildFoodText())}else await send(type,document.getElementById('detail').value.trim())}
+async function sendSimple(t,text){await send(t,text)}
+async function send(t,text){if(!token){document.getElementById('msg').textContent='❌ QR no válido.';return}const payload={request_type:t,table_token:token,table_name:tableName,customer_name:document.getElementById('customer').value.trim(),song_title:document.getElementById('song').value.trim(),artist:document.getElementById('artist').value.trim(),request_text:text,source:'qr'};document.getElementById('msg').textContent='ENVIANDO...';try{const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});const d=await r.json();if(!r.ok)throw new Error(d.error||'No se pudo enviar');document.getElementById('msg').textContent='✅ SOLICITUD ENVIADA';if(t==='cocina'){selected={};document.getElementById('foodNote').value=''}setTimeout(back,900)}catch(e){document.getElementById('msg').textContent='❌ '+e.message}}
 </script>
-</body>
-</html>
+</body></html>
