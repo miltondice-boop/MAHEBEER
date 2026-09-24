@@ -19,24 +19,23 @@
 </div>
 <div id="musicScreen" class="screen">
 <div id="welcome" class="welcome"></div>
-<div id="mesaInfo" class="hint"></div>
 <div class="subtitle">Agrega todas las canciones que quieras pedir.</div>
 <div id="songs"></div>
 <button class="add" onclick="addSong()">➕ AGREGAR OTRA CANCIÓN</button>
 <button class="music" onclick="submitMusic()">🎵 PEDIR MÚSICA</button>
-<a class="catalog" href="https://wa.me/c/573022092356" target="_blank" rel="noopener">📱 VER CATÁLOGO DE WHATSAPP</a>
+<a class="catalog" href="https://wa.me/c/573022092356" target="_blank" rel="noopener">🍔 MENÚ DE COMIDAS 😋</a>
 <div class="hint">Puedes agregar varias canciones antes de enviar.</div>
 <div id="msg" class="msg"></div>
 </div>
 </div>
 <script>
-const params=new URLSearchParams(location.search);const token=params.get('mesa')||'';const tableName=params.get('nombre')||'';const API='https://gkuwjfmgdmlyqgmvdmzf.supabase.co/functions/v1/mahebeer-service-requests';let songs=[];
+const API='https://gkuwjfmgdmlyqgmvdmzf.supabase.co/functions/v1/mahebeer-service-requests';let songs=[];
 function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
-function enter(){const name=document.getElementById('customerName').value.trim();if(!name){document.getElementById('nameMsg').textContent='⚠️ Escribe tu nombre para continuar.';return}sessionStorage.setItem('mahebeer_customer_name',name);document.getElementById('nameScreen').style.display='none';document.getElementById('musicScreen').style.display='block';document.getElementById('welcome').textContent='Hola, '+name+' 👋';document.getElementById('mesaInfo').textContent=token?(tableName?'Mesa '+tableName:'Mesa identificada'):'';if(!songs.length)addSong()}
+function enter(){const name=document.getElementById('customerName').value.trim();if(!name){document.getElementById('nameMsg').textContent='⚠️ Escribe tu nombre para continuar.';return}sessionStorage.setItem('mahebeer_customer_name',name);document.getElementById('nameScreen').style.display='none';document.getElementById('musicScreen').style.display='block';document.getElementById('welcome').textContent='Hola, '+name+' 👋';if(!songs.length)addSong()}
 function addSong(){songs.push({id:Date.now()+Math.random(),title:'',artist:''});renderSongs()}
 function removeSong(id){if(songs.length===1)return;songs=songs.filter(s=>s.id!==id);renderSongs()}
 function renderSongs(){document.getElementById('songs').innerHTML=songs.map((s,i)=>'<div class="row"><input placeholder="Canción '+(i+1)+'" value="'+escapeHtml(s.title)+'" oninput="songs.find(x=>x.id==='+s.id+').title=this.value"><input placeholder="Artista (opcional)" value="'+escapeHtml(s.artist)+'" oninput="songs.find(x=>x.id==='+s.id+').artist=this.value"><button class="remove" onclick="removeSong('+s.id+')">×</button></div>').join('')}
-async function submitMusic(){const valid=songs.filter(s=>s.title.trim());if(!valid.length){document.getElementById('msg').textContent='⚠️ Escribe al menos una canción.';return}if(!token){document.getElementById('msg').textContent='❌ QR no válido.';return}const customer=document.getElementById('customerName').value.trim()||sessionStorage.getItem('mahebeer_customer_name')||'';const text=valid.map((s,i)=>(i+1)+'. '+s.title.trim()+(s.artist.trim()?' — '+s.artist.trim():'')).join('\n');const payload={request_type:'musica',table_token:token,table_name:tableName,customer_name:customer,request_text:'PEDIDO DE MÚSICA\n'+text,source:'qr'};const msg=document.getElementById('msg');msg.textContent='ENVIANDO...';try{const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});const d=await r.json();if(!r.ok)throw new Error(d.error||'No se pudo enviar');msg.textContent='✅ MÚSICA SOLICITADA';songs=[{id:Date.now(),title:'',artist:''}];renderSongs()}catch(e){msg.textContent='❌ '+e.message}}
+async function submitMusic(){const valid=songs.filter(s=>s.title.trim());if(!valid.length){document.getElementById('msg').textContent='⚠️ Escribe al menos una canción.';return}const customer=document.getElementById('customerName').value.trim()||sessionStorage.getItem('mahebeer_customer_name')||'';const text=valid.map((s,i)=>(i+1)+'. '+s.title.trim()+(s.artist.trim()?' — '+s.artist.trim():'')).join('\n');const payload={request_type:'musica',table_token:'GENERAL',table_name:'GENERAL',customer_name:customer,request_text:'PEDIDO DE MÚSICA\n'+text,source:'qr_general'};const msg=document.getElementById('msg');msg.textContent='ENVIANDO...';try{const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});const d=await r.json();if(!r.ok)throw new Error(d.error||'No se pudo enviar');msg.textContent='✅ MÚSICA SOLICITADA';songs=[{id:Date.now(),title:'',artist:''}];renderSongs()}catch(e){msg.textContent='❌ '+e.message}}
 document.getElementById('customerName').addEventListener('keydown',e=>{if(e.key==='Enter')enter()});
 </script>
 </body>
